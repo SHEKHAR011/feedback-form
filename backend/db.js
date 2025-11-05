@@ -75,6 +75,8 @@ function createFeedbackTable() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       message TEXT NOT NULL,
       category VARCHAR(255) DEFAULT 'General',
+      is_read BOOLEAN DEFAULT FALSE,
+      is_archived BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
@@ -84,6 +86,28 @@ function createFeedbackTable() {
       console.error("Error creating feedback table:", err);
     } else {
       console.log("✅ Feedback table created or already exists");
+      // Add new columns if they don't exist (for existing databases)
+      addColumnsIfNotExist();
+    }
+  });
+}
+
+function addColumnsIfNotExist() {
+  // Check and add is_read column
+  db.query("SHOW COLUMNS FROM feedback LIKE 'is_read'", (err, result) => {
+    if (!err && result.length === 0) {
+      db.query("ALTER TABLE feedback ADD COLUMN is_read BOOLEAN DEFAULT FALSE", (alterErr) => {
+        if (!alterErr) console.log("✅ Added is_read column");
+      });
+    }
+  });
+
+  // Check and add is_archived column
+  db.query("SHOW COLUMNS FROM feedback LIKE 'is_archived'", (err, result) => {
+    if (!err && result.length === 0) {
+      db.query("ALTER TABLE feedback ADD COLUMN is_archived BOOLEAN DEFAULT FALSE", (alterErr) => {
+        if (!alterErr) console.log("✅ Added is_archived column");
+      });
     }
   });
 }
