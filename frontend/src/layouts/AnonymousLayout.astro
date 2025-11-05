@@ -1,9 +1,12 @@
 ---
+import { SignedIn } from "@clerk/astro/components";
+
 interface Props {
   title?: string;
 }
 
 const { title = 'Anonymous Feedback' } = Astro.props;
+const adminUserIds = import.meta.env.ADMIN_USER_IDS?.split(',') || [];
 ---
 
 <!doctype html>
@@ -17,21 +20,61 @@ const { title = 'Anonymous Feedback' } = Astro.props;
       href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css"
       rel="stylesheet"
     />
+    <script async crossorigin="anonymous" src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
   </head>
   <body class="h-screen overflow-hidden bg-gradient-to-br from-black via-neutral-900 to-gray-900 text-white">
     <header class="fixed top-0 left-0 right-0 backdrop-blur-xl bg-white/5 border-b border-white/20 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
         <div class="text-lg sm:text-xl font-bold truncate">Feedback App</div>
-        <div class="flex items-center gap-1 sm:gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <span class="text-xs sm:text-sm text-gray-400">Anonymous</span>
+        <div class="flex items-center gap-2 sm:gap-3">
+          <SignedIn>
+            <a 
+              href="/admin" 
+              id="admin-link-index"
+              class="hidden text-xs sm:text-sm px-3 py-1.5 rounded-lg backdrop-blur-xl bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-300"
+            >
+              Admin Dashboard
+            </a>
+          </SignedIn>
+          <div class="flex items-center gap-1 sm:gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span class="text-xs sm:text-sm text-gray-400">Anonymous</span>
+          </div>
         </div>
       </div>
     </header>
     <main class="pt-16 sm:pt-20">
       <slot />
     </main>
+    
+    <script define:vars={{ adminUserIds }}>
+      // Check if user is admin and show the admin link
+      window.addEventListener('load', () => {
+        // Wait for Clerk to be available
+        const checkClerk = setInterval(() => {
+          if (window.Clerk) {
+            clearInterval(checkClerk);
+            window.Clerk.load().then(() => {
+              const user = window.Clerk.user;
+              if (user && adminUserIds.includes(user.id)) {
+                // Show the link if user IS an admin
+                const adminLink = document.getElementById('admin-link-index');
+                if (adminLink) {
+                  adminLink.classList.remove('hidden');
+                  adminLink.classList.add('inline-flex', 'items-center');
+                }
+              }
+            }).catch(err => {
+              console.error('Clerk load error:', err);
+            });
+          }
+        }, 100);
+        
+        // Timeout after 5 seconds
+        setTimeout(() => clearInterval(checkClerk), 5000);
+      });
+    </script>
   </body>
 </html>

@@ -1,0 +1,408 @@
+---
+import Layout from "../layouts/Layout.astro";
+import axios from "axios";
+
+let analyticsData = {
+  total: 0,
+  byCategory: [],
+  trends: [],
+  sentiment: { positive: 0, negative: 0, neutral: 0, total: 0, positivePercent: 0, negativePercent: 0, neutralPercent: 0 },
+  activity: { byDay: [], byHour: [] }
+};
+
+let errorMessage = "";
+
+try {
+  const [totalRes, categoryRes, trendsRes, sentimentRes, activityRes] = await Promise.all([
+    axios.get("http://localhost:4000/api/analytics/total"),
+    axios.get("http://localhost:4000/api/analytics/by-category"),
+    axios.get("http://localhost:4000/api/analytics/trends?days=30"),
+    axios.get("http://localhost:4000/api/analytics/sentiment"),
+    axios.get("http://localhost:4000/api/analytics/activity")
+  ]);
+
+  analyticsData.total = totalRes.data.total;
+  analyticsData.byCategory = categoryRes.data;
+  analyticsData.trends = trendsRes.data;
+  analyticsData.sentiment = sentimentRes.data;
+  analyticsData.activity = activityRes.data;
+} catch (error) {
+  console.error("Error fetching analytics:", error);
+  errorMessage = "Unable to load analytics data. Please ensure the backend server is running.";
+}
+---
+
+<Layout title="Analytics Dashboard">
+  <div class="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="mb-6 sm:mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-1">Analytics Dashboard</h1>
+            <p class="text-xs sm:text-sm text-gray-400">Comprehensive feedback insights and trends</p>
+          </div>
+          <a 
+            href="/admin" 
+            class="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all duration-300 text-sm border border-white/20 w-fit shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Admin</span>
+          </a>
+        </div>
+      </div>
+
+      {errorMessage ? (
+        <!-- Error Message -->
+        <div class="backdrop-blur-xl bg-white/5 border border-red-500/30 rounded-2xl p-6 sm:p-8 text-center">
+          <div class="mx-auto bg-red-500/20 w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 sm:h-8 sm:w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="text-lg sm:text-xl font-bold text-white mb-2">Connection Error</h3>
+          <p class="text-sm text-gray-400 mb-6">{errorMessage}</p>
+          <button onclick="window.location.reload()" class="px-5 py-2 rounded-xl text-black font-semibold bg-white hover:bg-gray-200 transition-all duration-300 text-sm shadow-lg">
+            Retry
+          </button>
+        </div>
+      ) : (
+        <>
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <!-- Total Feedback -->
+            <div class="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <div class="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div class="text-gray-400 text-xs sm:text-sm font-medium">Total Feedback</div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-bold text-white">{analyticsData.total}</div>
+            </div>
+
+            <!-- Positive Percentage -->
+            <div class="relative backdrop-blur-xl bg-green-500/10 border border-green-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <div class="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                </svg>
+                <div class="text-green-400 text-xs sm:text-sm font-medium">Positive</div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-bold text-green-400">
+                {analyticsData.sentiment.positivePercent || 0}%
+              </div>
+            </div>
+
+            <!-- Negative Percentage -->
+            <div class="relative backdrop-blur-xl bg-red-500/10 border border-red-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <div class="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                </svg>
+                <div class="text-red-400 text-xs sm:text-sm font-medium">Negative</div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-bold text-red-400">
+                {analyticsData.sentiment.negativePercent || 0}%
+              </div>
+            </div>
+
+            <!-- Neutral Percentage -->
+            <div class="relative backdrop-blur-xl bg-blue-500/10 border border-blue-500/20 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <div class="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="text-blue-400 text-xs sm:text-sm font-medium">Neutral</div>
+              </div>
+              <div class="text-2xl sm:text-3xl font-bold text-blue-400">
+                {analyticsData.sentiment.neutralPercent || 0}%
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <!-- Category Distribution -->
+            <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <h2 class="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">Feedback by Category</h2>
+              <canvas id="categoryChart" class="w-full" style="max-height: 240px;"></canvas>
+            </div>
+
+            <!-- Sentiment Analysis -->
+            <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <h2 class="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">Sentiment Distribution</h2>
+              <canvas id="sentimentChart" class="w-full" style="max-height: 240px;"></canvas>
+            </div>
+
+            <!-- Trends Over Time -->
+            <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl lg:col-span-2">
+              <h2 class="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">Feedback Trends (Last 30 Days)</h2>
+              <canvas id="trendsChart" class="w-full" style="max-height: 240px;"></canvas>
+            </div>
+
+            <!-- Activity by Day -->
+            <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <h2 class="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">Activity by Day</h2>
+              <canvas id="dayChart" class="w-full" style="max-height: 280px;"></canvas>
+            </div>
+
+            <!-- Activity by Hour -->
+            <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xl">
+              <h2 class="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">Activity by Hour</h2>
+              <canvas id="hourChart" class="w-full" style="max-height: 280px;"></canvas>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+
+  <script define:vars={{ analyticsData }}>
+    window.analyticsData = analyticsData;
+  </script>
+
+  <script>
+    import Chart from 'chart.js/auto';
+
+    window.addEventListener('load', () => {
+      // @ts-ignore
+      const data = window.analyticsData;
+      
+      if (!data) return;
+
+      // Category Chart (Doughnut)
+      const categoryCanvas = document.getElementById('categoryChart');
+      if (categoryCanvas) {
+        new Chart(categoryCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: data.byCategory.map((c: any) => c.category),
+            datasets: [{
+              data: data.byCategory.map((c: any) => c.count),
+              backgroundColor: ['#3b82f6', '#ef4444', '#10b981', '#a855f7'],
+              borderWidth: 3,
+              borderColor: '#1a1a1a',
+              hoverBorderWidth: 4,
+              hoverBorderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'right',
+                align: 'center',
+                labels: { 
+                  color: '#ffffff',
+                  padding: 16,
+                  font: {
+                    size: 14,
+                    family: "'Inter', sans-serif",
+                    weight: 700
+                  },
+                  usePointStyle: true,
+                  pointStyle: 'rectRounded',
+                  boxWidth: 14,
+                  boxHeight: 14,
+                  textAlign: 'left'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                padding: 14,
+                titleFont: {
+                  size: 15,
+                  weight: 'bold'
+                },
+                bodyFont: {
+                  size: 14
+                },
+                cornerRadius: 10,
+                displayColors: true,
+                boxWidth: 12,
+                boxHeight: 12,
+                boxPadding: 6
+              }
+            }
+          }
+        });
+      }
+
+      // Sentiment Chart (Pie)
+      const sentimentCanvas = document.getElementById('sentimentChart') as HTMLCanvasElement;
+      if (sentimentCanvas) {
+        new Chart(sentimentCanvas, {
+          type: 'pie',
+          data: {
+            labels: ['Positive', 'Negative', 'Neutral'],
+            datasets: [{
+              data: [data.sentiment.positive, data.sentiment.negative, data.sentiment.neutral],
+              backgroundColor: ['#10b981', '#ef4444', '#3b82f6'],
+              borderWidth: 3,
+              borderColor: '#1a1a1a',
+              hoverBorderWidth: 4,
+              hoverBorderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'right',
+                align: 'center',
+                labels: { 
+                  color: '#ffffff',
+                  padding: 16,
+                  font: {
+                    size: 14,
+                    family: "'Inter', sans-serif",
+                    weight: 700
+                  },
+                  usePointStyle: true,
+                  pointStyle: 'rectRounded',
+                  boxWidth: 14,
+                  boxHeight: 14,
+                  textAlign: 'left'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                padding: 14,
+                titleFont: {
+                  size: 15,
+                  weight: 'bold'
+                },
+                bodyFont: {
+                  size: 14
+                },
+                cornerRadius: 10,
+                displayColors: true,
+                boxWidth: 12,
+                boxHeight: 12,
+                boxPadding: 6
+              }
+            }
+          }
+        });
+      }
+
+      // Trends Chart (Line)
+      const trendsCanvas = document.getElementById('trendsChart') as HTMLCanvasElement;
+      if (trendsCanvas) {
+        new Chart(trendsCanvas, {
+          type: 'line',
+          data: {
+            labels: data.trends.map((t: any) => new Date(t.date).toLocaleDateString()),
+            datasets: [{
+              label: 'Feedback Count',
+              data: data.trends.map((t: any) => t.count),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                labels: { color: '#fff' }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              y: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              }
+            }
+          }
+        });
+      }
+
+      // Day Chart (Bar)
+      const dayCanvas = document.getElementById('dayChart') as HTMLCanvasElement;
+      if (dayCanvas) {
+        new Chart(dayCanvas, {
+          type: 'bar',
+          data: {
+            labels: data.activity.byDay.map((d: any) => d.day),
+            datasets: [{
+              label: 'Feedback Count',
+              data: data.activity.byDay.map((d: any) => d.count),
+              backgroundColor: '#a855f7'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                labels: { color: '#fff' }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              y: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              }
+            }
+          }
+        });
+      }
+
+      // Hour Chart (Line)
+      const hourCanvas = document.getElementById('hourChart') as HTMLCanvasElement;
+      if (hourCanvas) {
+        new Chart(hourCanvas, {
+          type: 'line',
+          data: {
+            labels: data.activity.byHour.map((h: any) => `${h.hour}:00`),
+            datasets: [{
+              label: 'Feedback Count',
+              data: data.activity.byHour.map((h: any) => h.count),
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                labels: { color: '#fff' }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              },
+              y: {
+                ticks: { color: '#9ca3af' },
+                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+              }
+            }
+          }
+        });
+      }
+    });
+  </script>
+</Layout>

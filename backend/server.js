@@ -28,7 +28,7 @@ app.post("/api/feedback", (req, res) => {
 
 // GET all feedback (for admin)
 app.get("/api/feedback", (req, res) => {
-  const { search, archived, category } = req.query;
+  const { search, archived, category, read } = req.query;
   
   let query = "SELECT * FROM feedback WHERE 1=1";
   const params = [];
@@ -44,6 +44,13 @@ app.get("/api/feedback", (req, res) => {
   if (category && category !== "all") {
     query += " AND category = ?";
     params.push(category);
+  }
+  
+  // Filter by read status
+  if (read === "true") {
+    query += " AND is_read = 1";
+  } else if (read === "false") {
+    query += " AND is_read = 0";
   }
   
   // Search functionality

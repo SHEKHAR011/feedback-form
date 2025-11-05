@@ -6,89 +6,120 @@ const auth = Astro.locals.auth();
 const userId = auth.userId;
 ---
 
-<Layout title="Get Your User ID">
-  <div class="min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-2xl w-full">
+<Layout title="Admin Access Request">
+  <style>
+    body {
+      overflow: hidden !important;
+      height: 100vh !important;
+    }
+  </style>
+  <div class="fixed inset-0 flex items-center justify-center px-4 py-6 sm:p-6">
+    <main class="w-full max-w-md relative">
+      <!-- Subtle white glow behind card -->
+      <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-gray-500/5 blur-3xl rounded-3xl"></div>
+
       <SignedOut>
-        <div class="relative backdrop-blur-xl bg-white/5 border border-white/20 rounded-3xl shadow-2xl p-8 text-center">
-          <h1 class="text-3xl font-bold text-white mb-4">Sign In Required</h1>
-          <p class="text-gray-400 mb-6">Please sign in to view your Clerk User ID</p>
+        <!-- Sign In Required -->
+        <div class="relative backdrop-blur-xl bg-white/5 border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl p-6 text-center">
+          <div class="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">Authentication Required</h1>
+          <p class="text-gray-400 text-xs sm:text-sm mb-6">Please sign in to access your User ID</p>
+          <a 
+            href="/" 
+            class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 sm:py-3 font-semibold rounded-xl text-black bg-white hover:bg-gray-200 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl text-sm sm:text-base"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Return to Home
+          </a>
         </div>
-      </SignedOut>
+      </SignedOut>  
 
       <SignedIn>
-        <div class="relative backdrop-blur-xl bg-white/5 border border-white/20 rounded-3xl shadow-2xl p-8">
-          <h1 class="text-3xl font-bold text-white mb-6">Your Clerk User ID</h1>
-          
-          <div class="bg-black/30 border border-white/20 rounded-xl p-6 mb-6">
-            <label class="block text-sm font-semibold text-gray-300 mb-2">User ID</label>
-            <div class="flex items-center gap-3">
-              <code id="userId" class="flex-1 text-green-400 font-mono text-lg break-all">
+        <!-- Access Request Card -->
+        <div class="relative backdrop-blur-xl bg-white/5 border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl p-6">
+          <div class="text-center mb-5">
+            <div class="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">Admin Access Request</h1>
+            <p class="text-gray-400 text-xs sm:text-sm">Request admin privileges for your account 🔑</p>
+          </div>
+
+          <div class="space-y-4">
+            <!-- User ID Section -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-300 mb-1">Your User ID</label>
+              <code id="userId" class="block text-green-400 font-mono text-xs sm:text-sm break-all bg-black/30 px-3 py-2 rounded-xl border border-white/20">
                 {userId}
               </code>
-              <button 
-                onclick="copyUserId()"
-                class="px-4 py-2 font-semibold rounded-lg text-black bg-white hover:bg-gray-200 transition-all duration-300 whitespace-nowrap"
-              >
-                Copy
-              </button>
             </div>
-            <p id="copyStatus" class="text-sm text-gray-400 mt-2 min-h-[1.25rem]"></p>
-          </div>
 
-          <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 mb-6">
-            <h2 class="text-xl font-bold text-white mb-3 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              How to Set Up Admin Access
-            </h2>
-            <ol class="space-y-3 text-gray-300">
-              <li class="flex">
-                <span class="font-bold text-blue-400 mr-3">1.</span>
-                <span>Copy your User ID above</span>
-              </li>
-              <li class="flex">
-                <span class="font-bold text-blue-400 mr-3">2.</span>
-                <span>Open <code class="bg-black/30 px-2 py-1 rounded text-sm">/frontend/.env</code> file</span>
-              </li>
-              <li class="flex">
-                <span class="font-bold text-blue-400 mr-3">3.</span>
-                <span>Add your User ID to the <code class="bg-black/30 px-2 py-1 rounded text-sm">ADMIN_USER_IDS</code> variable</span>
-              </li>
-              <li class="flex">
-                <span class="font-bold text-blue-400 mr-3">4.</span>
-                <span>For multiple admins, separate IDs with commas</span>
-              </li>
-              <li class="flex">
-                <span class="font-bold text-blue-400 mr-3">5.</span>
-                <span>Restart your dev server</span>
-              </li>
-            </ol>
-          </div>
-
-          <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
-            <h3 class="text-lg font-bold text-yellow-400 mb-2">Example .env Configuration:</h3>
-            <pre class="bg-black/50 p-4 rounded-lg overflow-x-auto text-sm"><code class="text-gray-300">ADMIN_USER_IDS={userId}</code></pre>
-          </div>
-
-          <div class="mt-6 flex gap-4">
-            <a 
-              href="/admin" 
-              class="flex-1 text-center px-6 py-3 font-semibold rounded-xl text-black bg-white hover:bg-gray-200 transition-all duration-300"
+            <button 
+              onclick="copyUserId()"
+              class="w-full py-2.5 text-sm sm:text-base font-semibold rounded-xl text-black bg-white shadow-lg hover:bg-gray-200 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-xl"
             >
-              Go to Admin Dashboard
-            </a>
-            <a 
-              href="/" 
-              class="flex-1 text-center px-6 py-3 font-semibold rounded-xl text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300"
-            >
-              Back to Home
-            </a>
+              Copy User ID 📋
+            </button>
+
+            <div id="copyStatus" class="text-center text-xs sm:text-sm font-medium min-h-[1.5rem]"></div>
+
+            <!-- Instructions Section -->
+            <div class="backdrop-blur-xl bg-white/5 border border-white/20 rounded-xl p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h2 class="text-sm sm:text-base font-bold text-white">How to Request Access</h2>
+              </div>
+              <div class="space-y-2 text-gray-300 text-xs sm:text-sm">
+                <div class="flex items-start gap-2">
+                  <span class="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs font-bold">1</span>
+                  <p>Copy your User ID using the button above</p>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs font-bold">2</span>
+                  <p>Send it to the <strong class="text-white">system administrator</strong></p>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs font-bold">3</span>
+                  <p>Wait for admin approval and confirmation</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <a 
+                href="/" 
+                class="flex items-center justify-center gap-1.5 px-4 py-2.5 font-semibold rounded-xl text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 text-sm sm:text-base"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Home</span>
+              </a>
+              <a 
+                href="/admin" 
+                class="flex items-center justify-center gap-1.5 px-4 py-2.5 font-semibold rounded-xl text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 text-sm sm:text-base"
+              >
+                <span>Dashboard</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </SignedIn>
-    </div>
+    </main>
   </div>
 
   <script>
@@ -98,14 +129,12 @@ const userId = auth.userId;
       
       if (userId && status) {
         navigator.clipboard.writeText(userId.trim()).then(() => {
-          status.textContent = '✅ Copied to clipboard!';
-          status.className = 'text-sm text-green-400 mt-2 min-h-[1.25rem]';
+          status.innerHTML = '<span class="text-green-400">✅ Copied to clipboard!</span>';
           setTimeout(() => {
-            status.textContent = '';
+            status.innerHTML = '';
           }, 3000);
         }).catch(() => {
-          status.textContent = '❌ Failed to copy';
-          status.className = 'text-sm text-red-400 mt-2 min-h-[1.25rem]';
+          status.innerHTML = '<span class="text-red-400">❌ Failed to copy</span>';
         });
       }
     }

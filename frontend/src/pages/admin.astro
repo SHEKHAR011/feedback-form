@@ -6,8 +6,9 @@ import "../styles/global.css";
 let feedbackList = [];
 let errorMessage = "";
 const searchQuery = Astro.url.searchParams.get("search") || "";
-const showArchived = Astro.url.searchParams.get("archived") === "true";
+const showArchived = Astro.url.searchParams.get("archived") || "all";
 const categoryFilter = Astro.url.searchParams.get("category") || "all";
+const readFilter = Astro.url.searchParams.get("read") || "all";
 
 // Helper function to get emoji for category
 function getCategoryEmoji(category: string) {
@@ -33,11 +34,62 @@ function getCategoryColor(category: string) {
   return colorMap[normalizedCategory] || 'bg-white/10 text-white border-white/20';
 }
 
+// Helper function to format date in user-friendly way
+function formatRelativeTime(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  // Less than a minute
+  if (diffInSeconds < 60) {
+    return 'Just now';
+  }
+  
+  // Less than an hour
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+  }
+  
+  // Less than a day
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+  }
+  
+  // Less than a week
+  if (diffInSeconds < 604800) {
+    const days = Math.floor(diffInSeconds / 86400);
+    if (days === 1) return 'Yesterday';
+    return `${days} days ago`;
+  }
+  
+  // Less than a month
+  if (diffInSeconds < 2592000) {
+    const weeks = Math.floor(diffInSeconds / 604800);
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+  }
+  
+  // More than a month - show full date with time
+  const timeStr = date.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit',
+    hour12: true 
+  });
+  
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  }) + ' at ' + timeStr;
+}
+
 try {
   const params = new URLSearchParams();
   if (searchQuery) params.append("search", searchQuery);
-  params.append("archived", showArchived.toString());
+  if (showArchived !== "all") params.append("archived", showArchived);
   if (categoryFilter !== "all") params.append("category", categoryFilter);
+  if (readFilter !== "all") params.append("read", readFilter);
   
   const res = await axios.get(`http://localhost:4000/api/feedback?${params.toString()}`);
   feedbackList = res.data;
@@ -57,6 +109,16 @@ try {
             <p class="text-gray-400 mt-1 text-sm sm:text-base">Manage and review anonymous feedback submissions</p>
           </div>
           <div class="flex items-center gap-2 sm:gap-4 flex-wrap">
+            <a 
+              href="/analytics" 
+              class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500   text-white rounded-lg font-medium transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl "
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span class="hidden sm:inline">Analytics</span>
+              <span class="sm:hidden">📊</span>
+            </a>
             <div class="flex items-center space-x-2 bg-white/5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-white/10">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -72,11 +134,12 @@ try {
       </header>
 
       <!-- Search and Filter Bar -->
-      <div class="mb-4 sm:mb-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6">
-        <form method="GET" class="flex flex-col gap-3 sm:gap-4">
-          <div class="flex-1">
-            <div class="relative">
-              <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="mb-4 sm:mb-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
+        <!-- Search Bar -->
+        <form method="GET" class="mb-5">
+          <div class="flex gap-2 sm:gap-3">
+            <div class="flex-1 relative">
+              <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -84,67 +147,125 @@ try {
                 name="search"
                 value={searchQuery}
                 placeholder="Search feedback..."
-                class="w-full pl-9 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base bg-black/30 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent transition duration-200"
+                class="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base bg-black/40 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
               />
             </div>
-          </div>
-          <div class="flex gap-2">
             <button
               type="submit"
-              class="flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold rounded-xl text-black bg-white hover:bg-gray-200 transition-all duration-300"
+              class="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold rounded-xl text-black bg-white hover:bg-gray-200 transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap"
             >
               Search
             </button>
             <a
               href="/admin"
-              class="flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold rounded-xl text-center text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300"
+              class="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold rounded-xl text-center text-white bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 whitespace-nowrap"
             >
               Clear
             </a>
           </div>
         </form>
         
-        <div class="mt-4 flex flex-wrap gap-2 items-center">
-          <span class="text-xs sm:text-sm font-semibold text-gray-400 w-full sm:w-auto">Filter:</span>
-          <a
-            href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived && { archived: 'true' }), category: 'all' }).toString()}`}
-            class={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 ${categoryFilter === 'all' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
-          >
-            All
-          </a>
-          <a
-            href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived && { archived: 'true' }), category: 'Suggestion' }).toString()}`}
-            class={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 ${categoryFilter === 'Suggestion' ? 'bg-blue-500 text-white' : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'}`}
-          >
-            💡<span class="hidden sm:inline ml-1">Suggestion</span>
-          </a>
-          <a
-            href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived && { archived: 'true' }), category: 'Complaint' }).toString()}`}
-            class={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 ${categoryFilter === 'Complaint' ? 'bg-red-500 text-white' : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'}`}
-          >
-            ⚠️<span class="hidden sm:inline ml-1">Complaint</span>
-          </a>
-          <a
-            href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived && { archived: 'true' }), category: 'Praise' }).toString()}`}
-            class={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 ${categoryFilter === 'Praise' ? 'bg-green-500 text-white' : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'}`}
-          >
-            👏<span class="hidden sm:inline ml-1">Praise</span>
-          </a>
-          <a
-            href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived && { archived: 'true' }), category: 'Others' }).toString()}`}
-            class={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 ${categoryFilter === 'Others' ? 'bg-purple-500 text-white' : 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'}`}
-          >
-            📝<span class="hidden sm:inline ml-1">Others</span>
-          </a>
+        <!-- Filter Section -->
+        <div class="space-y-3">
+          <!-- Category Filters -->
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">Category</span>
+              <div class="flex-1 h-px bg-white/10"></div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived !== 'all' && { archived: showArchived }), ...(readFilter !== 'all' && { read: readFilter }), category: 'all' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border ${categoryFilter === 'all' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 text-white border-white/20 hover:bg-white/10'}`}
+              >
+                All
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived !== 'all' && { archived: showArchived }), ...(readFilter !== 'all' && { read: readFilter }), category: 'Suggestion' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${categoryFilter === 'Suggestion' ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/50' : 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'}`}
+              >
+                <span>💡</span>
+                <span class="hidden sm:inline">Suggestion</span>
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived !== 'all' && { archived: showArchived }), ...(readFilter !== 'all' && { read: readFilter }), category: 'Complaint' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${categoryFilter === 'Complaint' ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/50' : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'}`}
+              >
+                <span>⚠️</span>
+                <span class="hidden sm:inline">Complaint</span>
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived !== 'all' && { archived: showArchived }), ...(readFilter !== 'all' && { read: readFilter }), category: 'Praise' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${categoryFilter === 'Praise' ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/50' : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20'}`}
+              >
+                <span>👏</span>
+                <span class="hidden sm:inline">Praise</span>
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(showArchived !== 'all' && { archived: showArchived }), ...(readFilter !== 'all' && { read: readFilter }), category: 'Others' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${categoryFilter === 'Others' ? 'bg-purple-500 text-white border-purple-500 shadow-lg shadow-purple-500/50' : 'bg-purple-500/10 text-purple-400 border-purple-500/30 hover:bg-purple-500/20'}`}
+              >
+                <span>📝</span>
+                <span class="hidden sm:inline">Others</span>
+              </a>
+            </div>
+          </div>
           
-          <span class="text-gray-600 mx-2 hidden sm:inline">|</span>
-          
-          <a
-            href={showArchived ? "/admin" : "/admin?archived=true"}
-            class={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 ${showArchived ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
-          >
-            {showArchived ? "Active" : "Archived"}
-          </a>
+          <!-- Status Filters -->
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">Status</span>
+              <div class="flex-1 h-px bg-white/10"></div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(categoryFilter !== 'all' && { category: categoryFilter }), ...(readFilter !== 'all' && { read: readFilter }), archived: 'all' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${showArchived === 'all' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 text-white border-white/20 hover:bg-white/10'}`}
+              >
+                📋 All
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(categoryFilter !== 'all' && { category: categoryFilter }), ...(readFilter !== 'all' && { read: readFilter }), archived: 'false' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${showArchived === 'false' ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/50' : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20'}`}
+              >
+                ✅ Active
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(categoryFilter !== 'all' && { category: categoryFilter }), ...(readFilter !== 'all' && { read: readFilter }), archived: 'true' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${showArchived === 'true' ? 'bg-yellow-500 text-black border-yellow-500 shadow-lg shadow-yellow-500/50' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/20'}`}
+              >
+                📦 Archived
+              </a>
+            </div>
+          </div>
+
+          <!-- Read Status Filters -->
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">Read Status</span>
+              <div class="flex-1 h-px bg-white/10"></div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(categoryFilter !== 'all' && { category: categoryFilter }), ...(showArchived !== 'all' && { archived: showArchived }), read: 'all' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${readFilter === 'all' ? 'bg-white text-black border-white shadow-lg' : 'bg-white/5 text-white border-white/20 hover:bg-white/10'}`}
+              >
+                👁️ All
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(categoryFilter !== 'all' && { category: categoryFilter }), ...(showArchived !== 'all' && { archived: showArchived }), read: 'false' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${readFilter === 'false' ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/50' : 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'}`}
+              >
+                � Unread
+              </a>
+              <a
+                href={`/admin?${new URLSearchParams({ ...(searchQuery && { search: searchQuery }), ...(categoryFilter !== 'all' && { category: categoryFilter }), ...(showArchived !== 'all' && { archived: showArchived }), read: 'true' }).toString()}`}
+                class={`px-4 sm:px-5 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all duration-300 border flex items-center gap-1.5 ${readFilter === 'true' ? 'bg-gray-500 text-white border-gray-500 shadow-lg shadow-gray-500/50' : 'bg-gray-500/10 text-gray-400 border-gray-500/30 hover:bg-gray-500/20'}`}
+              >
+                📭 Read
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -197,7 +318,7 @@ try {
           <!-- Feedback Entries -->
           <div class="divide-y divide-white/10">
             {feedbackList.map((f:any) => (
-              <div class={`p-4 sm:p-6 hover:bg-white/10 transition-colors duration-200 ${f.is_read ? 'opacity-60' : ''}`} data-feedback-id={f.id}>
+              <div class={`p-4 sm:p-6 hover:bg-white/10 transition-colors duration-200 ${f.is_read ? 'opacity-25' : 'opacity-100'}`} data-feedback-id={f.id}>
                 <div class="flex gap-3 sm:gap-4">
                   <div class="flex-shrink-0">
                     <div class={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-lg sm:text-xl ${f.is_read ? 'bg-white/10' : 'bg-white/20'}`}>
@@ -221,8 +342,15 @@ try {
                           </span>
                         )}
                       </div>
-                      <span class="text-xs sm:text-sm text-gray-400 whitespace-nowrap">
-                        {new Date(f.created_at).toLocaleString()}
+                      <span class="text-xs sm:text-sm text-gray-400 whitespace-nowrap" title={new Date(f.created_at).toLocaleString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}>
+                        {formatRelativeTime(f.created_at)}
                       </span>
                     </div>
                     <p class="mt-2 sm:mt-3 text-sm sm:text-base text-gray-200 break-words">{f.message}</p>

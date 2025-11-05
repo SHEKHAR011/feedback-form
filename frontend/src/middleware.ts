@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/astro/server'
 
-const isProtectedRoute = createRouteMatcher(['/admin(.*)'])
+const isProtectedRoute = createRouteMatcher(['/admin(.*)', '/analytics(.*)'])
 
 export const onRequest = clerkMiddleware((auth, context) => {
   const { userId } = auth()
@@ -15,11 +15,11 @@ export const onRequest = clerkMiddleware((auth, context) => {
     const adminUserIds = import.meta.env.ADMIN_USER_IDS?.split(',').map((id: string) => id.trim()) || []
     
     if (adminUserIds.length > 0 && !adminUserIds.includes(userId)) {
-      // User is signed in but not an admin - redirect to unauthorized page
+      // User is signed in but not an admin - redirect to get-user-id page
       return new Response(null, {
         status: 302,
         headers: {
-          Location: '/unauthorized'
+          Location: '/get-user-id'
         }
       })
     }
