@@ -1,0 +1,113 @@
+---
+import axios from "axios";
+
+let status = "";
+if (Astro.request.method === "POST") {
+  try {
+    const body = await Astro.request.text();
+    const data = JSON.parse(body);
+    const { message, category } = data;
+
+    await axios.post("http://localhost:4000/api/feedback", { message, category });
+    status = "✅ Feedback submitted!";
+  } catch {
+    status = "❌ Error submitting feedback.";
+  }
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Anonymous Feedback</title>
+    <meta name="description" content="Submit anonymous feedback" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css"
+      rel="stylesheet"
+    >
+  </head>
+
+  <body class="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-gray-900 flex items-center justify-center p-6 text-white">
+    <main class="w-full max-w-lg relative">
+      <!-- Subtle white glow behind card -->
+      <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-gray-500/5 blur-3xl rounded-3xl"></div>
+
+      <!-- Monochrome glass card -->
+      <div class="relative backdrop-blur-xl bg-white/5 border border-white/20 rounded-3xl shadow-2xl p-8 transition duration-500 hover:scale-[1.02]">
+        <div class="text-center mb-8">
+          <h1 class="text-4xl font-bold text-white mb-2 tracking-tight">
+            Anonymous Feedback
+          </h1>
+          <p class="text-gray-400 text-sm">Your thoughts matter — share them freely 🖋️</p>
+        </div>
+
+        <form id="feedbackForm" class="space-y-5">
+          <div>
+            <label for="message" class="block text-sm font-semibold text-gray-300 mb-1">Your Feedback</label>
+            <textarea
+              id="message"
+              placeholder="Write your feedback..."
+              required
+              class="w-full px-4 py-3 text-white placeholder-gray-500 bg-black/30 border border-white/20 rounded-xl focus:ring-2 focus:ring-white focus:border-transparent transition duration-200 resize-none"
+              rows="4"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="category" class="block text-sm font-semibold text-gray-300 mb-1">Category (Optional)</label>
+            <input
+              id="category"
+              type="text"
+              placeholder="e.g. Suggestion, Complaint, Praise"
+              class="w-full px-4 py-3 text-white placeholder-gray-500 bg-black/30 border border-white/20 rounded-xl focus:ring-2 focus:ring-white focus:border-transparent transition duration-200"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full py-3 font-semibold rounded-xl text-black bg-white shadow-lg hover:bg-gray-200 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            Submit Feedback 📨
+          </button>
+        </form>
+
+        <div id="status" class="mt-6 text-center text-sm font-medium min-h-[1.5rem]">
+          {status && (
+            <span class={`${status.includes('✅') ? 'text-green-400' : 'text-red-400'}`}>
+              {status}
+            </span>
+          )}
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const form = document.getElementById('feedbackForm');
+      const statusElement = document.getElementById('status');
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = document.getElementById('message').value;
+        const category = document.getElementById('category').value;
+
+        try {
+          const response = await fetch('http://localhost:4000/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, category }),
+          });
+
+          if (response.ok) {
+            statusElement.innerHTML = '<span class="text-green-400">✅ Feedback submitted!</span>';
+            form.reset();
+          } else {
+            statusElement.innerHTML = '<span class="text-red-400">❌ Error submitting feedback.</span>';
+          }
+        } catch (error) {
+          statusElement.innerHTML = '<span class="text-red-400">❌ Server error.</span>';
+        }
+      });
+    </script>
+  </body>
+</html>
