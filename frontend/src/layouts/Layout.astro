@@ -1,0 +1,52 @@
+---
+import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro/components'
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Anonymous Feedback' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content="Submit anonymous feedback" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-gray-900 text-white">
+    <header class="fixed top-0 left-0 right-0 backdrop-blur-xl bg-white/5 border-b border-white/20 z-50">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+          <a href="/" class="text-xl font-bold hover:text-gray-300 transition-colors">Feedback App</a>
+          <SignedIn>
+            <a href="/admin" class="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+              Admin Dashboard
+            </a>
+          </SignedIn>
+        </div>
+        <div class="flex items-center gap-4">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button class="px-4 py-2 font-semibold rounded-lg text-black bg-white hover:bg-gray-200 transition-all duration-300">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </div>
+      </div>
+    </header>
+    <main class="pt-20">
+      <slot />
+    </main>
+  </body>
+</html>

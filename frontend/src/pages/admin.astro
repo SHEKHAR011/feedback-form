@@ -1,4 +1,5 @@
 ---
+import Layout from "../layouts/Layout.astro";
 import axios from "axios";
 import "../styles/global.css";
 
@@ -14,30 +15,26 @@ try {
 }
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin Panel - Feedback Management</title>
-    <meta name="description" content="Manage anonymous feedback" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css"
-      rel="stylesheet"
-    >
-  </head>
-
-  <body class="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-gray-900 text-white">
-    <div class="max-w-6xl mx-auto px-4 py-10">
-      <!-- Header -->
+<Layout title="Admin Panel - Feedback Management">
+  <div class="max-w-6xl mx-auto px-4 py-10">
+      <!-- Page Header -->
       <header class="mb-10">
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-3xl font-bold text-white">Feedback Dashboard</h1>
             <p class="text-gray-400 mt-1">Manage and review anonymous feedback submissions</p>
           </div>
-          <div class="flex items-center space-x-2">
-            <div class="w-3 h-3 rounded-full bg-green-400"></div>
-            <span class="text-sm text-gray-400">System Online</span>
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 bg-white/5 px-3 py-2 rounded-lg border border-white/10">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span class="text-sm text-gray-300">Protected Route</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-green-400"></div>
+              <span class="text-sm text-gray-400">System Online</span>
+            </div>
           </div>
         </div>
       </header>
@@ -132,5 +129,4 @@ try {
         <p>🖤 Secure Feedback Management System</p>
       </footer>
     </div>
-  </body>
-</html>
+</Layout>

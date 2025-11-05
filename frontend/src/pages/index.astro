@@ -1,4 +1,5 @@
 ---
+import AnonymousLayout from "../layouts/AnonymousLayout.astro";
 import axios from "axios";
 
 let status = "";
@@ -16,19 +17,8 @@ if (Astro.request.method === "POST") {
 }
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Anonymous Feedback</title>
-    <meta name="description" content="Submit anonymous feedback" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css"
-      rel="stylesheet"
-    >
-  </head>
-
-  <body class="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-gray-900 flex items-center justify-center p-6 text-white">
+<AnonymousLayout title="Anonymous Feedback">
+  <div class="h-screen flex items-center justify-center p-6">
     <main class="w-full max-w-lg relative">
       <!-- Subtle white glow behind card -->
       <div class="absolute inset-0 bg-gradient-to-tr from-white/10 to-gray-500/5 blur-3xl rounded-3xl"></div>
@@ -83,31 +73,38 @@ if (Astro.request.method === "POST") {
     </main>
 
     <script>
-      const form = document.getElementById('feedbackForm');
+      const form = document.getElementById('feedbackForm') as HTMLFormElement | null;
       const statusElement = document.getElementById('status');
       
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const message = document.getElementById('message').value;
-        const category = document.getElementById('category').value;
+      if (form && statusElement) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const messageEl = document.getElementById('message') as HTMLTextAreaElement | null;
+          const categoryEl = document.getElementById('category') as HTMLInputElement | null;
+          
+          if (!messageEl || !categoryEl) return;
+          
+          const message = messageEl.value;
+          const category = categoryEl.value;
 
-        try {
-          const response = await fetch('http://localhost:4000/api/feedback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, category }),
-          });
+          try {
+            const response = await fetch('http://localhost:4000/api/feedback', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message, category }),
+            });
 
-          if (response.ok) {
-            statusElement.innerHTML = '<span class="text-green-400">✅ Feedback submitted!</span>';
-            form.reset();
-          } else {
-            statusElement.innerHTML = '<span class="text-red-400">❌ Error submitting feedback.</span>';
+            if (response.ok) {
+              statusElement.innerHTML = '<span class="text-green-400">✅ Feedback submitted!</span>';
+              form.reset();
+            } else {
+              statusElement.innerHTML = '<span class="text-red-400">❌ Error submitting feedback.</span>';
+            }
+          } catch (error) {
+            statusElement.innerHTML = '<span class="text-red-400">❌ Server error.</span>';
           }
-        } catch (error) {
-          statusElement.innerHTML = '<span class="text-red-400">❌ Server error.</span>';
-        }
-      });
+        });
+      }
     </script>
-  </body>
-</html>
+  </div>
+</AnonymousLayout>
