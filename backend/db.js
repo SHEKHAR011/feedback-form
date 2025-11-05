@@ -4,7 +4,7 @@ import mysql from "mysql2";
 const dbConfig = {
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",      // Use environment variable for password
+  password: process.env.DB_PASSWORD || "admin",      // Use environment variable for password
   database: process.env.DB_NAME || "feedbackdb",
 };
 
